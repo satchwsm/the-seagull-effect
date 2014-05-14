@@ -8,57 +8,41 @@ import ImageDraw
 import StringIO
 import base64
 
-xa = -2.0
-xb = 1.0
-ya = -1.5
-yb = 1.5
+def left(xa, xb):
+	MainPage.xb = xb - 0.1
+	MainPage.xa = xa - 0.1
 
-def left():
-	global xa 
-	global xb
-	xb -= 0.1
-	xa -= 0.1
+def right(xa, xb):
+	MainPage.xb = xb + 0.1
+	MainPage.xa = xa + 0.1 
 
-def right():
-	global xa 
-	global xb
-	xb += 0.1
-	xa += 0.1 
+def up(ya, yb):
+	MainPage.yb = yb + 0.1
+	MainPage.ya = ya + 0.1
 
-def up():
-	global ya 
-	global yb
-	yb += 0.1
-	ya += 0.1
+def down(ya, yb):
+	MainPage.yb = yb - 0.1
+	MainPage.ya = ya - 0.1
 
-def down():
-	global ya 
-	global yb
-	yb -= 0.1
-	ya -= 0.1
+def zoomIn(xa, xb, ya, yb):
+	MainPage.xa = xa + 0.5
+	MainPage.xb = xb - 0.5
+	MainPage.ya = ya + 0.5
+	MainPage.yb = yb - 0.5	
 
-def zoomIn():
-	global xa
-	global xb
-	global ya
-	global yb
-	xa += 0.5
-	xb -= 0.5
-	ya += 0.5
-	yb -= 0.5	
-
-def zoomOut():
-	global xa
-	global xb
-	global ya
-	global yb
-	xa -= 0.5
-	xb += 0.5
-	ya -= 0.5
-	yb += 0.5
+def zoomOut(xa, xb, ya, yb):
+	MainPage.xa = xa - 0.5
+	MainPage.xb = xb + 0.5
+	MainPage.ya = ya - 0.5
+	MainPage.yb = yb + 0.5
 
 
 class MainPage(webapp2.RequestHandler):
+	
+    xa = -2.0
+    xb = 1.0
+    ya = -1.5
+    yb = 1.5
 
     def get(self):
 
@@ -67,11 +51,11 @@ class MainPage(webapp2.RequestHandler):
     def post(self):
 	command = cgi.escape(self.request.get('content'))
 
-	mutate = {"left": left(), "right": right(), "up": up(), "down": down(), "in": zoomIn(), "out": zoomOut()}
+	mutate = {"left": left(self.xa, self.xb), "right": right(self.xa, self.xb), "up": up(self.ya, self.yb), "down": down(self.ya, self.yb), "in": zoomIn(self.xa, self.xb, self.ya, self.yb), "out": zoomOut(self.xa, self.xb, self.ya, self.yb)}
 
 	mutate[command]
 
-	print command, xa, xb, ya, yb
+	print command, self.xa, self.xb, self.ya, self.yb
 
 	self.refreshImage()	
 
@@ -79,7 +63,7 @@ class MainPage(webapp2.RequestHandler):
 	user = users.get_current_user()
         
         if user:
-            self.response.write('<!doctype html><html><body><br><br></body></html>')
+            self.response.write('<!DOCTYPE html><html><head><script>function myFunction() {document.getElementById("demo").innerHTML = "Paragraph changed.";}</script></head><body><h1>My Web Page</h1><p id="demo">A Paragraph</p><button type="button" onclick="myFunction()">Try it</button></body></html>')
             self.response.write('The Seagull Effect<br>')
             self.response.write('Lets make some crazy fractals ' + user.nickname() + '<br><br>')
 	    self.response.write('<form action="/" method="post"><div><textarea name="content" rows="1" cols="15"></textarea></div><div><input type="submit" value="BAM"></div></form>')
@@ -88,14 +72,15 @@ class MainPage(webapp2.RequestHandler):
 
 
 	mm = MandelbrotMaker()
-	fractal = mm.drawBrot()
+	fractal = mm.drawBrot(self.xa, self.xb, self.ya, self.yb)
 
 	self.response.write(fractal)
 
 
 class MandelbrotMaker():
+
 	
-	def drawBrot(self):
+	def drawBrot(self, xa, xb, ya, yb):
 
 		maxIt = 128 # max iterations allowed
 		# image size
