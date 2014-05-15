@@ -63,10 +63,10 @@ class MainPage(webapp2.RequestHandler):
 	user = users.get_current_user()
         
         if user:
-            self.response.write('<!DOCTYPE html><html><head><script>function myFunction() {document.getElementById("demo").innerHTML = "Paragraph changed.";}</script></head><body><h1>My Web Page</h1><p id="demo">A Paragraph</p><button type="button" onclick="myFunction()">Try it</button></body></html>')
-            self.response.write('The Seagull Effect<br>')
+	    self.response.write('<br>The Seagull Effect<br>')
             self.response.write('Lets make some crazy fractals ' + user.nickname() + '<br><br>')
-	    self.response.write('<form action="/" method="post"><div><textarea name="content" rows="1" cols="15"></textarea></div><div><input type="submit" value="BAM"></div></form>')
+            self.response.write('<!DOCTYPE html><html><head><script>function myFunction() {document.getElementById("demo").innerHTML = "Paragraph changed.";}</script></head><body><h1>My Web Page</h1><p id="demo">A Paragraph</p><button type="button" onclick="myFunction()"><</button><button type="button" onclick="myFunction()">></button><button type="button" onclick="myFunction()">^</button><button type="button" onclick="myFunction()">down or w/e</button></body><br></html>')
+	  #  self.response.write('<form action="/" method="post"><div><textarea name="content" rows="1" cols="15"></textarea></div><div><input type="submit" value="BAM"></div></form>')
         else:
             self.redirect(users.create_login_url(self.request.uri))
 
