@@ -31,7 +31,8 @@ class MainPage(webapp2.RequestHandler):
         if user:
 	    self.response.write('<br>The Seagull Effect<br>')
             self.response.write('Lets make some crazy fractals ' + user.nickname() + '<br><br>')
-	    self.response.write('<form action="/" method="post"><div><textarea name="xa" rows="1" cols="5"></textarea><textarea name="xb" rows="1" cols="5"></textarea><textarea name="ya" rows="1" cols="5"></textarea><textarea name="yb" rows="1" cols="5"></textarea></div><div><input type="submit" value="BAM"></div></form>')
+            self.response.write('left x-bound | right x-bound | lower y-bound | upper y-bound<br>')
+	    self.response.write('<form action="/" method="post"><div><textarea name="xa" rows="1" cols="5">'+str(xa)+'</textarea><textarea name="xb" rows="1" cols="5">'+str(xb)+'</textarea><textarea name="ya" rows="1" cols="5">'+str(ya)+'</textarea><textarea name="yb" rows="1" cols="5">'+str(yb)+'</textarea></div><div><input type="submit" value="BAM"></div></form>')
         else:
             self.redirect(users.create_login_url(self.request.uri))
 
