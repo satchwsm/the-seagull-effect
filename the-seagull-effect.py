@@ -9,13 +9,19 @@ import StringIO
 import base64
 import unicodedata
 
-javascript = '<script> var container = document.querySelector("#fractal"); var displayPoint = document.querySelector("#point"); container.addEventListener("click", getClickPosition, false); function getClickPosition(e) { var xPosition = e.clientX - 8; var yPosition = e.clientY - 80; var xa = document.getElementById("xa").value; var xb = document.getElementById("xb").value; var ya = document.getElementById("ya").value; var yb = document.getElementById("yb").value; var xPosition = (xPosition / 256.0 * (xb - xa) + (xa - 0.0)); var yPosition = (-1 *((yPosition / 256.0) * (yb - ya) + (ya - 0.0))); displayPoint.innerHTML = xPosition+ " , " + yPosition;} </script>'
+javascript = '<script> var container = document.querySelector("#fractal"); var displayPointX = document.querySelector("#xpoint"); var displayPointY = document.querySelector("#ypoint"); container.addEventListener("click", getClickPosition, false); function getClickPosition(e) { var xPosition = e.clientX - 8; var yPosition = e.clientY - 8; var xa = document.getElementById("xa").value; var xb = document.getElementById("xb").value; var ya = document.getElementById("ya").value; var yb = document.getElementById("yb").value; var xPosition = (xPosition / 256.0 * (xb - xa) + (xa - 0.0)); var yPosition = (-1 *((yPosition / 256.0) * (yb - ya) + (ya - 0.0))); displayPointX.value = xPosition; displayPointY.value = yPosition;} </script>'
 
 class MainPage(webapp2.RequestHandler):
 
     def get(self):
 
-	self.refreshImage(-2.0, 1.0, -1.5, 1.5)
+	xpoint = cgi.escape(self.request.get('xpoint'))
+	ypoint = cgi.escape(self.request.get('ypoint'))
+
+	if xpoint == "":
+	    self.refreshImage(-2.0, 1.0, -1.5, 1.5)
+	else:
+	    self.response.write('xpoint: '+xpoint)
 
     def post(self):
 	xa = cgi.escape(self.request.get('xa'))
@@ -30,11 +36,8 @@ class MainPage(webapp2.RequestHandler):
     def refreshImage(self, xa, xb, ya, yb):
 	user = users.get_current_user()
 
-	#mm = MandelbrotMaker()
-	#fractal = mm.drawBrot(xa, xb, ya, yb)
-
-	jj = JuliaJenerator()
-	fractal = jj.drawJulia(0.1, 0.5, xa, xb, ya, yb)
+	mm = MandelbrotMaker()
+	fractal = mm.drawBrot(xa, xb, ya, yb)
 
 	self.response.write(fractal)
         
@@ -44,6 +47,45 @@ class MainPage(webapp2.RequestHandler):
             self.response.write('left x-bound | right x-bound | lower y-bound | upper y-bound<br>')
             self.response.write(javascript)
 	    self.response.write('<form action="/" method="post"><div><textarea id="xa" name="xa" rows="1" cols="5">'+str(xa)+'</textarea><textarea id="xb" name="xb" rows="1" cols="5">'+str(xb)+'</textarea><textarea id="ya" name="ya" rows="1" cols="5">'+str(ya)+'</textarea><textarea id="yb" name="yb" rows="1" cols="5">'+str(yb)+'</textarea></div><div><input type="submit" value="BAM"></div></form>')
+        else:
+            self.redirect(users.create_login_url(self.request.uri))
+
+
+class JuliaPage(webapp2.RequestHandler):
+
+    def get(self):
+
+	x = float(self.request.get('x'))
+	y = float(self.request.get('y'))
+
+	self.refreshImage(x, y, -2.0, 1.0, -1.5, 1.5)
+
+    def post(self):
+
+	x = float(self.request.get('x'))
+	y = float(self.request.get('y'))	
+	
+	xa = cgi.escape(self.request.get('xa'))
+	xb = cgi.escape(self.request.get('xb'))
+	ya = cgi.escape(self.request.get('ya'))
+	yb = cgi.escape(self.request.get('yb'))
+
+	self.refreshImage(x, y, float(xa), float(xb), float(ya), float(yb))	
+
+    def refreshImage(self, x, y, xa, xb, ya, yb):
+	user = users.get_current_user()
+
+	jj = JuliaJenerator()
+	fractal = jj.drawJulia(x, y, xa, xb, ya, yb)
+
+	self.response.write(fractal)
+        
+        if user:
+	    self.response.write('<br>The Seagull Effect<br>')
+            self.response.write('Lets make some crazy fractals ' + user.nickname() + '<br><br>')
+            self.response.write('left x-bound | right x-bound | lower y-bound | upper y-bound<br>')
+            self.response.write(javascript)
+	    self.response.write('<form action="/julia" method="post"><div><textarea id="xa" name="xa" rows="1" cols="5">'+str(xa)+'</textarea><textarea id="xb" name="xb" rows="1" cols="5">'+str(xb)+'</textarea><textarea id="ya" name="ya" rows="1" cols="5">'+str(ya)+'</textarea><textarea id="yb" name="yb" rows="1" cols="5">'+str(yb)+'</textarea></div><div><input type="submit" value="BAM"></div></form>')
         else:
             self.redirect(users.create_login_url(self.request.uri))
 
@@ -76,7 +118,7 @@ class MandelbrotMaker():
 		image.save(output, format='png')
 		img_b64 = output.getvalue().encode('base64', 'strict')
 
-		return '<!doctype html><html><body><a id="fractal"><img src="data:image/png;base64, ' + img_b64 +  '"></a></body></html>'		
+		return '<!doctype html><html><body><a id="fractal"><img src="data:image/png;base64, ' + img_b64 +  '"></a><br><p><form action="/julia" method="get"><input type="text" name="x" id="xpoint"><input type="text" name="y" id="ypoint"><input type="submit" value="Jenerate Julia"></form></div></p></body></html>'		
 		
 class JuliaJenerator():
 	
@@ -106,10 +148,11 @@ class JuliaJenerator():
 		image.save(output, format='png')
 		img_b64 = output.getvalue().encode('base64', 'strict')
 
-		return '<!doctype html><html><body><br><p id="point"></p><a><img id="fractal" src="data:image/png;base64, ' + img_b64 +  '"></a><div id="point"></div></body></html>'
+		return '<!doctype html><html><body><br><p id="point"><><></p><a><img id="fractal" src="data:image/png;base64, ' + img_b64 +  '"></a><div id="point"></div></body></html>'
 
 
 
 application = webapp2.WSGIApplication([
     ('/', MainPage),
+    ('/julia', JuliaPage),
 ], debug=True)
